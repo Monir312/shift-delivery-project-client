@@ -1,16 +1,93 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { useLoaderData } from "react-router";
+import Swal from "sweetalert2";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
+import useAuth from "../../hooks/useAuth";
 
 export default function SendParcel() {
   const [parcelType, setParcelType] = useState("Document");
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+
+  const { 
+    register,
+     control,
+      handleSubmit,
+       setValue,
+        formState: { errors } 
+      } = useForm();
+      const {user} = useAuth();
+      console.log(user);
+      const axiosSecure = useAxiosSecure();
+
+  const serviceCenters = useLoaderData();
+  const regionsDuplicate = serviceCenters.map(c => c.region);
+  const regions = [...new Set(regionsDuplicate)];
+  const senderRegion = useWatch({ control, name: 'senderRegion' });
+  const receiverRegion = useWatch({ control, name: 'receiverRegion' })
+
+  const districtsByRegion = region => {
+    const regionDistricts = serviceCenters.filter(c => c.region === region);
+    const districts = regionDistricts.map(d => d.district);
+    return districts;
+  }
+
+
+
+
+
 
   useEffect(() => {
     setValue("parcelType", parcelType);
   }, [parcelType, setValue]);
 
   const handleSendParcel = (data) => {
-    console.log(data);
+
+    const isDocument = data.parcelType === 'document';
+
+    const isSameDistrict = data.senderDistrict === data.receiverDistrict;
+    console.log(isSameDistrict);
+    const parcelWeight = parseFloat(data.parcelWeight);
+
+    let cost = 0;
+    if (isDocument) {
+      cost = isSameDistrict ? 60 : 80;
+    } else {
+      if (parcelWeight < 3) {
+        cost = isSameDistrict ? 110 : 150;
+      }
+      else {
+        const minCharge = isSameDistrict ? 110 : 150;
+        const extraWeight = parcelWeight - 3;
+        const extraCharge = isSameDistrict ? extraWeight * 40 : extraWeight * 40 + 40;
+        cost = minCharge + extraCharge;
+      }
+    }
+    console.log('cost', cost);
+
+    Swal.fire({
+      title: "Are you agree with this cost?",
+      text: `You will be charged ! ${cost}.BDT`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, take it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+
+        axiosSecure.post('/parcels', data)
+        .then(res => {
+          console.log('after saving parcel', res.data);
+        })
+
+        // Swal.fire({
+        //   title: "Received ",
+        //   text: "Your Parcel within 30 minutes!",
+        //   icon: "success"
+        // });
+      }
+    });
+
   };
 
   return (
@@ -80,10 +157,13 @@ export default function SendParcel() {
               <h2 className="text-lg font-semibold mb-4">Sender Details</h2>
               <div className="grid grid-cols-1 gap-2">
                 <label className="label mt-2 text-[#0f172a]">Sender Name</label>
-                <input {...register("senderName")} className="border p-3 rounded-lg border-gray-300" placeholder="Sender Name" />
+                <input type="text" {...register("senderName")} defaultValue={user?.displayName}
+                className="border p-3 rounded-lg border-gray-300" placeholder="Sender Name" />
 
                 <label className="label mt-2 text-[#0f172a]">Sender Email</label>
-                <input type="email" {...register("senderEmail")} className="border p-3 rounded-lg border-gray-300" placeholder="Sender Email" />
+                <input type="email" {...register("senderEmail")} 
+                defaultValue={user?.email}
+                className="border p-3 rounded-lg border-gray-300" placeholder="Sender Email" />
 
                 <label className="label mt-2 text-[#0f172a]">Sender Address</label>
                 <input {...register("senderAddress")} className="border p-3 rounded-lg border-gray-300" placeholder="Address" />
@@ -91,10 +171,30 @@ export default function SendParcel() {
                 <label className="label mt-2 text-[#0f172a]">Sender Phone No</label>
                 <input {...register("senderPhone")} className="border p-3 rounded-lg border-gray-300" placeholder="Sender Phone No" />
 
-                <label className="label mt-2 text-[#0f172a]">Select your District</label>
-                <select className="border p-3 rounded-lg border-gray-300">
-                  <option>Select your District</option>
-                </select>
+
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Sender Regions</legend>
+                  <select {...register("senderRegion")} defaultValue="Pick a Region" className="select">
+                    <option disabled={true}>Pick a Region</option>
+                    {
+                      regions.map((r, i) => <option key={i} value={r}>{r}</option>)
+                    }
+
+                  </select>
+                </fieldset>
+
+
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Sender District</legend>
+                  <select {...register("senderDistrict")} defaultValue="Pick a District" className="select">
+                    <option disabled={true}>Pick a District</option>
+                    {
+                      districtsByRegion(senderRegion).map((r, i) => <option key={i} value={r}>{r}</option>)
+                    }
+
+                  </select>
+                </fieldset>
+
 
                 <label className="label mt-2 text-[#0f172a]">Pickup Instruction</label>
                 <textarea
@@ -104,6 +204,8 @@ export default function SendParcel() {
                 ></textarea>
               </div>
             </div>
+
+
 
             {/* Receiver */}
             <div>
@@ -121,10 +223,29 @@ export default function SendParcel() {
                 <label className="label mt-2 text-[#0f172a]">Receiver Contact No.</label>
                 <input {...register("receiverPhone")} className="border p-3 rounded-lg border-gray-300" placeholder="Receiver Contact No" />
 
-                <label className="label mt-2 text-[#0f172a]">Receiver District</label>
-                <select className="border p-3 rounded-lg border-gray-300">
-                  <option>Select your District</option>
-                </select>
+
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Receiver Regions</legend>
+                  <select {...register("receiverRegion")} defaultValue="Pick a Region" className="select">
+                    <option disabled={true}>Pick a Region</option>
+                    {
+                      regions.map((r, i) => <option key={i} value={r}>{r}</option>)
+                    }
+
+                  </select>
+                </fieldset>
+
+
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Receiver District</legend>
+                  <select {...register("receiverDistrict")} defaultValue="Pick a district" className="select">
+                    <option disabled={true}>Pick a District</option>
+                    {
+                      districtsByRegion(receiverRegion).map((d, i) => <option key={i} value={d}>{d}</option>)
+                    }
+
+                  </select>
+                </fieldset>
 
 
                 <label className="label mt-2 text-[#0f172a]">Delivery Instruction</label>
