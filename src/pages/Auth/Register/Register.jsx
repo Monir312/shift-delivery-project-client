@@ -50,7 +50,6 @@ const Register = () => {
            .catch(error=>{
             console.log(error);
            })
-//abc
         })
 
      })
@@ -62,7 +61,7 @@ const Register = () => {
   return (
   <div className="min-h-screen grid grid-cols-1 md:grid-cols-1">
     {/* Left Section */} 
-    <div className="flex flex-col justify-center px-10 md:px-20">
+    <div className="flex flex-col justify-center px-10 md:px-20 mt-10">
       {/* Logo */} 
 
       {/* Title */}
