@@ -23,6 +23,12 @@ const NavBar = () => {
       <li><Link to="/" className="text-green-600 font-semibold">About Us</Link></li>
       <li><Link to="/send-parcel" className="text-gray-700 hover:text-green-600 transition">Send Parcel</Link></li>
       <li><Link to="/rider" className="text-gray-700 hover:text-green-600 transition">Be a Rider</Link></li>
+
+      {
+        user && <>
+        <li><Link to="/dashboard/my-parcels" className="text-gray-700 hover:text-green-600 transition">My Parcels</Link></li>
+        </>
+      }
     </>
   );
 
@@ -36,7 +42,7 @@ const NavBar = () => {
             {links} </ul>
         </div>
 
-        <Link to="/" className="btn btn-ghost text-xl"> <Logo /> </Link>
+        <span to="/" className="btn btn-ghost text-xl"> <Logo /> </span>
       </div>
 
       {/* Desktop Menu */}

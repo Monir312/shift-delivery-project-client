@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import Swal from "sweetalert2";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
 import useAuth from "../../hooks/useAuth";
@@ -8,16 +8,17 @@ import useAuth from "../../hooks/useAuth";
 export default function SendParcel() {
   const [parcelType, setParcelType] = useState("Document");
 
-  const { 
+  const {
     register,
-     control,
-      handleSubmit,
-       setValue,
-        formState: { errors } 
-      } = useForm();
-      const {user} = useAuth();
-      console.log(user);
-      const axiosSecure = useAxiosSecure();
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors }
+  } = useForm();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  console.log(user);
+  const axiosSecure = useAxiosSecure();
 
   const serviceCenters = useLoaderData();
   const regionsDuplicate = serviceCenters.map(c => c.region);
@@ -30,10 +31,6 @@ export default function SendParcel() {
     const districts = regionDistricts.map(d => d.district);
     return districts;
   }
-
-
-
-
 
 
   useEffect(() => {
@@ -63,6 +60,7 @@ export default function SendParcel() {
       }
     }
     console.log('cost', cost);
+    data.cost = cost;
 
     Swal.fire({
       title: "Are you agree with this cost?",
@@ -71,20 +69,24 @@ export default function SendParcel() {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, take it!"
+      confirmButtonText: "Confirm and Continue Payment"
     }).then((result) => {
       if (result.isConfirmed) {
 
         axiosSecure.post('/parcels', data)
-        .then(res => {
-          console.log('after saving parcel', res.data);
-        })
-
-        // Swal.fire({
-        //   title: "Received ",
-        //   text: "Your Parcel within 30 minutes!",
-        //   icon: "success"
-        // });
+          .then(res => {
+            console.log('after saving parcel', res.data);
+            if (res.data.insertedId) {
+              navigate('/dashboard/my-parcels');
+              Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Your work has been saved",
+                showConfirmButton: false,
+                timer: 2500
+              });
+            }
+          })
       }
     });
 
@@ -158,12 +160,12 @@ export default function SendParcel() {
               <div className="grid grid-cols-1 gap-2">
                 <label className="label mt-2 text-[#0f172a]">Sender Name</label>
                 <input type="text" {...register("senderName")} defaultValue={user?.displayName}
-                className="border p-3 rounded-lg border-gray-300" placeholder="Sender Name" />
+                  className="border p-3 rounded-lg border-gray-300" placeholder="Sender Name" />
 
                 <label className="label mt-2 text-[#0f172a]">Sender Email</label>
-                <input type="email" {...register("senderEmail")} 
-                defaultValue={user?.email}
-                className="border p-3 rounded-lg border-gray-300" placeholder="Sender Email" />
+                <input type="email" {...register("senderEmail")}
+                  defaultValue={user?.email}
+                  className="border p-3 rounded-lg border-gray-300" placeholder="Sender Email" />
 
                 <label className="label mt-2 text-[#0f172a]">Sender Address</label>
                 <input {...register("senderAddress")} className="border p-3 rounded-lg border-gray-300" placeholder="Address" />

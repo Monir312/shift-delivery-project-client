@@ -4,6 +4,7 @@ import useAuth from '../../../hooks/useAuth';
 import SocialLogin from '../SocialLogin/SocialLogin';
 import axios from 'axios';
 import { Link, useLocation, useNavigate } from 'react-router';
+import useAxiosSecure from '../../../hooks/useAxiosSecure';
 
 const Register = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -11,7 +12,7 @@ const Register = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  console.log(location);
+  const axiosSecure = useAxiosSecure();
 
 
 
@@ -34,17 +35,32 @@ const Register = () => {
 
         axios.post(image_API_URL, formData)
         .then(res => {
-          console.log('after image upload', res.data.data.url);
+          const photoURL =  res.data.data.url;
+
+           const userInfo = {
+            email: data.email,
+            displayName: data.name,
+            photoURL : photoURL,
+           }
+           axiosSecure.post('/users', userInfo)
+           .then(res=>{
+            if(res.data.insertedId){
+              console.log('user created in the database');
+            }
+           })
+
 
            // update user profile
            const userProfile = {
             displayName: data.name,
-            photoURL : res.data.data.url,
+            photoURL : photoURL,
            }
+
+
+
 
            updateUserProfile(userProfile)
            .then(()=>{
-            console.log('user profile updated done');
             navigate(location.state || '/');
            })
            .catch(error=>{
@@ -57,6 +73,10 @@ const Register = () => {
         console.log(error)
       });
   }
+
+
+
+
 
   return (
   <div className="min-h-screen grid grid-cols-1 md:grid-cols-1">

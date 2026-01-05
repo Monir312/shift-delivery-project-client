@@ -9,6 +9,15 @@ import ErrorPage from "../pages/ErrorPage/ErrorPage";
 import PrivateRoute from "./PrivateRoute";
 import Rider from "../pages/Rider/Rider";
 import SendParcel from "../pages/SendParcel/SendParcel";
+import DashboardLayout from "../layouts/DashboardLayout";
+import MyParcels from "../pages/Dashboard/MyParcels/Myparcels";
+import Payment from "../pages/Dashboard/Payment/Payment";
+import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
+import PaymentCancelled from "../pages/Dashboard/Payment/PaymentCancelled";
+import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
+import ApproveRiders from "../pages/Dashboard/ApproveRiders/ApproveRiders";
+import UsersManagement from "../pages/Dashboard/UsersManagement/UsersManagement";
+import AdminRoutes from "./AdminRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +31,8 @@ export const router = createBrowserRouter([
       },
       {
         path: 'rider',
-        element: <PrivateRoute><Rider></Rider></PrivateRoute>
+        element: <PrivateRoute><Rider></Rider></PrivateRoute>,
+        loader: ()=>fetch('/serviceCenter.json').then(res=>res.json())
       },
       {
         path: 'send-parcel',
@@ -51,6 +61,43 @@ export const router = createBrowserRouter([
         path: 'register',
         Component: Register
 
+      }
+    ]
+  },
+
+
+
+  {
+    path: 'dashboard',
+    element: <PrivateRoute><DashboardLayout></DashboardLayout></PrivateRoute>,
+    children: [
+      {
+        path: 'my-parcels',
+        Component: MyParcels
+      },
+      {
+        path: 'payment/:parcelId',
+        Component: Payment
+      },
+      {
+        path: "payment-history",
+        Component: PaymentHistory
+      },
+      {
+        path: 'payment-success',
+        Component: PaymentSuccess
+      },
+      {
+        path: 'payment-cancelled',
+        Component: PaymentCancelled
+      },
+      {
+        path: 'approve-riders',
+        element: <AdminRoutes><ApproveRiders></ApproveRiders></AdminRoutes>
+      },
+      {
+        path: 'users-management',
+        element: <AdminRoutes><UsersManagement></UsersManagement></AdminRoutes>
       }
     ]
   }
