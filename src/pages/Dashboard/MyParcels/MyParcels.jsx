@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import React from 'react';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
-import { FaEdit } from 'react-icons/fa';
+import { FiEdit } from 'react-icons/fi';
 import { FaMagnifyingGlass, FaTrashCan } from 'react-icons/fa6';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router';
@@ -18,9 +19,9 @@ const MyParcels = () => {
     }
   })
 
-
   const handleParcelDelete = id => {
     console.log(id);
+
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -37,19 +38,23 @@ const MyParcels = () => {
             console.log(res.data);
 
             if (res.data.deletedCount) {
+              // refresh the data in the ui
               refetch();
+
               Swal.fire({
                 title: "Deleted!",
                 text: "Your parcel request has been deleted.",
                 icon: "success"
               });
             }
+
           })
+
 
       }
     });
-  }
 
+  }
 
   const handlePayment = async (parcel) => {
     const paymentInfo = {
@@ -57,27 +62,27 @@ const MyParcels = () => {
       parcelId: parcel._id,
       senderEmail: parcel.senderEmail,
       parcelName: parcel.parcelName,
+      trackingId: parcel.trackingId
     }
     const res = await axiosSecure.post('/payment-checkout-session', paymentInfo);
+
     console.log(res.data.url);
     window.location.assign(res.data.url);
-
   }
-
 
   return (
     <div>
-      <h2>All of my parcels: {parcels.length}</h2>
-
+      <h2>All of my parcels : {parcels.length}</h2>
       <div className="overflow-x-auto">
         <table className="table table-zebra">
           {/* head */}
           <thead>
             <tr>
-              <th>Serial No.</th>
+              <th></th>
               <th>Name</th>
               <th>Cost</th>
               <th>Payment</th>
+              <th>Tracking Id</th>
               <th>Delivery Status</th>
               <th>Actions</th>
             </tr>
@@ -90,32 +95,32 @@ const MyParcels = () => {
                 <td>{parcel.cost}</td>
                 <td>
                   {
-                    parcel.paymentStatus === 'paid' ? <span className='text-green-400'>Paid</span>
+                    parcel.paymentStatus === 'paid' ?
+                      <span className='text-green-400'>Paid</span>
                       :
-                      // <Link to={`/dashboard/payment/${parcel._id}`}>
-                      //   <button className='btn btn-primary btn-small  text-black'>Pay</button>
-                      // </Link>
-                      <button onClick={() => handlePayment(parcel)} className='btn btn-primary btn-small  text-black'>Pay</button>
-
+                      <button onClick={() => handlePayment(parcel)} className="btn btn-sm btn-primary text-black">Pay</button>
 
                   }
                 </td>
-                <td>{parcels.deliverStatus}</td>
                 <td>
-                  <button className='btn btn-square hover:bg-primary mr-1'>
-                    <FaMagnifyingGlass></FaMagnifyingGlass>
+                  <Link to={`/parcel-track/${parcel.trackingId}`}> {parcel.trackingId}</Link>
+                </td>
+                <td>{parcel.deliveryStatus}</td>
+                <td>
+                  <button className='btn btn-square hover:bg-primary'>
+                    <FaMagnifyingGlass />
                   </button>
-                  <button className='btn btn-square hover:bg-primary mr-1'>
-                    <FaEdit></FaEdit>
+                  <button className='btn btn-square hover:bg-primary mx-2'>
+                    <FiEdit></FiEdit>
                   </button>
-                  <button onClick={() => handleParcelDelete(parcel._id)}
+                  <button
+                    onClick={() => handleParcelDelete(parcel._id)}
                     className='btn btn-square hover:bg-primary'>
-                    <FaTrashCan></FaTrashCan>
+                    <FaTrashCan />
                   </button>
                 </td>
               </tr>)
             }
-
 
           </tbody>
         </table>
